@@ -8,27 +8,15 @@ const config = {
   },
 };
 
+
 export default function App(props) {
   const row = {
     nomeGiocatore: { type: "text", value: "" },
     prezzoBin: { type: "number", value: 0 },
-    prezzoAcquistoAttuale: { type: "number", value: 0 },
-    prezzoAcquistoMassimo: {
-      type: "number",
-      value: "",
-      fn: (id, elementId) => {
-        //questa funzione calcola il prezzo massimo che non si deve superare per ottenere un profit dalla vendita del giocatore
-        //id: è l'id dell'input prezzo bin su cui si deve calcolare la formula
-        //elementId: è l'id dell'elemento dove va settato il valore calcolato con la formula (è e.target)
-        const priceBin = document.getElementById(`prezzoBin_${id}`)?.value;
-        if (priceBin) {
-          const element = document.getElementById(elementId);
-          element.value = parseInt(priceBin) - parseInt(priceBin) * 0.6;
-        }
-      },
-    },
-    prezzoVendita: { type: "number", value: "" },
-    guadagnoNetto: { type: "number", value: "" },
+    prezzoAcquistoAttuale: { type: "number", value: 0},
+    prezzoAcquistoMassimo: { type: "number", value: "", disabled: true },
+    prezzoVendita: { type: "number", value: "", disabled: true },
+    guadagnoNetto: { type: "number", value: "", disabled: true },
   };
 
   const [rows, setRows] = useState(
@@ -42,9 +30,13 @@ export default function App(props) {
     var playerData = localStorage.getItem(config.localStorage.playerData);
     if (playerData) {
       playerData = JSON.parse(playerData);
-      setRows(playerData);
+      
+      if(playerData.length === 0) return;
+
+      setRows(playerData)
     }
   }, []);
+
 
   // click sul pulsante aggiungi riga
   const addRows = () => {
@@ -56,7 +48,7 @@ export default function App(props) {
     const ris = confirm("Vuoi eliminare tutti i giocatori");
     if (!ris) return;
 
-    localStorage.setItem(config.localStorage.playerData, []);
+    localStorage.setItem(config.localStorage.playerData, "[]");
     setRows(
       Array(5)
         .fill()
@@ -110,44 +102,65 @@ export default function App(props) {
 }
 
 function TableRow({ row, index }) {
+  
+  // quando si esce dal foucus la funzione valuta il valore e imposta gli altri campi
+  const handleValue = (e) => {
+    // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
+    if (e.target.id.startsWith("prezzoBin")) {
+      var prezzoBinVal = e.target.value;
+      const prezzoAcquistoMassimoInput = document.getElementById(
+        `prezzoAcquistoMassimo_${index}`
+      );
+      const prezzoVenditaInput = document.getElementById(
+        `prezzoVendita_${index}`
+      );
+
+      //formula per calcolare il prezzo massimo
+      prezzoAcquistoMassimoInput.value = roundValue(prezzoBinVal - prezzoBinVal * 0.06);
+
+      // formula per calcolare il prezzo di vendita
+      prezzoVenditaInput.value = roundValue(prezzoBinVal - prezzoBinVal * 0.01);
+    }
+
+    // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
+    if (e.target.id.startsWith("prezzoAcquistoAttuale")) {
+      const prezzoAcquistoAttualeVal = e.target.value;
+      const guadagnoNettoVal = document.getElementById(
+        `guadagnoNetto_${index}`
+      );
+      const prezzoVenditaVal = document.getElementById(
+        `prezzoVendita_${index}`
+      )?.value ;
+
+      // formula per calcolare il guadagno netto
+      guadagnoNettoVal.value = prezzoVenditaVal - (prezzoVenditaVal * 0.05) - prezzoAcquistoAttualeVal;
+    }
+
+    // arrotonda i valori secondo le logiche di fc usando la funzione definita
+    if (e.target.type != "text") {
+      e.target.value = roundValue(e.target.value);
+    }
+  };
+
   return (
     <tr>
-      {Object.entries(row).map(([name, value], i) => {
+      {Object.keys(row).map((key, i) => {
+        const data = row[key];
         return (
-          <InputRow
-            key={i}
-            dataInput={{ name: name, ...value, index: index }}
-            dataRow={row}
-          />
+          <td key={i} className="p-2">
+            <input
+              key={key}
+              type={data.type}
+              id={`${key}_${index}`}
+              defaultValue={data.value}
+              onBlur={handleValue}
+              disabled={data.disabled}
+              className={`w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-300`}
+            />
+          </td>
         );
       })}
     </tr>
-  );
-}
-
-function InputRow({ dataInput, dataRow }) {
-  const { name, type, value, index, fn } = dataInput;
-  console.log(dataRow);
-
-  // quando esci dal foucus dell'input il valore viene gestito
-  const handleValue = (e) => {
-    if (e.target.type === "text") return;
-    e.target.value = roundValue(parseInt(e.target.value));
-  };
-
-  // elementId: id dell'elemento che si sta creando
-  const elementId = `${name}_${index}`;
-
-  return (
-    <td key={name} className="p-2">
-      <input
-        type={type}
-        id={elementId}
-        defaultValue={fn ? fn(index, elementId) : value}
-        onBlur={handleValue}
-        className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
-    </td>
   );
 }
 
