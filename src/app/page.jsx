@@ -2,34 +2,49 @@
 
 import React, { useEffect, useState } from "react";
 
-const row = {
-  nomeGiocatore: { type: "text", value: "" },
-  prezzoBin: { type: "number", value: 0 },
-  prezzoAcquistoAttuale: { type: "number", value: 0 },
-  prezzoAcquistoMassimo: { type: "number", value: "" },
-  prezzoVendita: { type: "number", value: "" },
-  guadagnoNetto: { type: "number", value: "" },
-};
-
 const config = {
   localStorage: {
-    playerData: "PLAYERDATA"
-  }
-}
+    playerData: "PLAYERDATA",
+  },
+};
 
 export default function App(props) {
+  const row = {
+    nomeGiocatore: { type: "text", value: "" },
+    prezzoBin: { type: "number", value: 0 },
+    prezzoAcquistoAttuale: { type: "number", value: 0 },
+    prezzoAcquistoMassimo: {
+      type: "number",
+      value: "",
+      fn: (id, elementId) => {
+        //questa funzione calcola il prezzo massimo che non si deve superare per ottenere un profit dalla vendita del giocatore
+        //id: è l'id dell'input prezzo bin su cui si deve calcolare la formula
+        //elementId: è l'id dell'elemento dove va settato il valore calcolato con la formula (è e.target)
+        const priceBin = document.getElementById(`prezzoBin_${id}`)?.value;
+        if (priceBin) {
+          const element = document.getElementById(elementId);
+          element.value = parseInt(priceBin) - parseInt(priceBin) * 0.6;
+        }
+      },
+    },
+    prezzoVendita: { type: "number", value: "" },
+    guadagnoNetto: { type: "number", value: "" },
+  };
+
   const [rows, setRows] = useState(
-    Array(5).fill().map(() => ({ ...row }))
+    Array(5)
+      .fill()
+      .map(() => ({ ...row }))
   );
 
   // quandosi carica la pagina cerca dentro il localstorage i valori vecchi
-  useEffect(()=>{
+  useEffect(() => {
     var playerData = localStorage.getItem(config.localStorage.playerData);
-    if(playerData){
-      playerData = JSON.parse(playerData)
-      setRows(playerData)
+    if (playerData) {
+      playerData = JSON.parse(playerData);
+      setRows(playerData);
     }
-  }, [])
+  }, []);
 
   // click sul pulsante aggiungi riga
   const addRows = () => {
@@ -39,11 +54,15 @@ export default function App(props) {
   // click sul pulsante pulisci
   const clearAll = () => {
     const ris = confirm("Vuoi eliminare tutti i giocatori");
-    if(!ris) return
+    if (!ris) return;
 
     localStorage.setItem(config.localStorage.playerData, []);
-    setRows(Array(5).fill().map(() => ({ ...row })));
-  }
+    setRows(
+      Array(5)
+        .fill()
+        .map(() => ({ ...row }))
+    );
+  };
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
@@ -52,19 +71,19 @@ export default function App(props) {
       </p>
       <div className="max-w-6xl mx-auto">
         <div className="flex gap-3">
-        <button
-          onClick={addRows}
-          className="mb-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 transition cursor-pointer"
+          <button
+            onClick={addRows}
+            className="mb-4 px-4 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 transition cursor-pointer"
           >
-          Aggiungi Riga
-        </button>
-        <button
-          onClick={clearAll}
-          className="mb-4 px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-600 transition cursor-pointer"
+            Aggiungi Riga
+          </button>
+          <button
+            onClick={clearAll}
+            className="mb-4 px-4 py-2 bg-red-500 text-white font-semibold rounded hover:bg-red-600 transition cursor-pointer"
           >
-          Pulisci
-        </button>
-          </div>
+            Pulisci
+          </button>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white shadow rounded-lg overflow-hidden">
@@ -94,27 +113,37 @@ function TableRow({ row, index }) {
   return (
     <tr>
       {Object.entries(row).map(([name, value], i) => {
-        return <InputRow key={i} dataInput={{ name: name, ...value }} dataRow={row}/>;
+        return (
+          <InputRow
+            key={i}
+            dataInput={{ name: name, ...value, index: index }}
+            dataRow={row}
+          />
+        );
       })}
     </tr>
   );
 }
 
 function InputRow({ dataInput, dataRow }) {
-  const { name, type, value } = dataInput;
-  console.log(dataRow)
+  const { name, type, value, index, fn } = dataInput;
+  console.log(dataRow);
 
   // quando esci dal foucus dell'input il valore viene gestito
   const handleValue = (e) => {
-    if(e.target.type === "text") return;
+    if (e.target.type === "text") return;
     e.target.value = roundValue(parseInt(e.target.value));
-  }
+  };
+
+  // elementId: id dell'elemento che si sta creando
+  const elementId = `${name}_${index}`;
 
   return (
     <td key={name} className="p-2">
       <input
         type={type}
-        defaultValue={value}
+        id={elementId}
+        defaultValue={fn ? fn(index, elementId) : value}
         onBlur={handleValue}
         className="w-full border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
