@@ -92,7 +92,7 @@ export default function App(props) {
           </button>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-auto h-full max-h-[450px] md:max-h-[500px]">
           <table className="min-w-full bg-white shadow rounded-lg overflow-hidden">
             <thead className="bg-gray-200 text-black">
               <tr>
@@ -104,7 +104,7 @@ export default function App(props) {
                 <th className="py-2 px-4 text-left">Guadagno Netto</th>
               </tr>
             </thead>
-            <tbody className="text-black h-10 overflow-y-hidden">
+            <tbody className="text-black">
               {rows.map((row, index) => {
                 return <TableRow key={index} row={row} index={index} />;
               })}
@@ -178,7 +178,6 @@ function TableRow({ row, index }) {
       {Object.keys(row).map((key, i) => {
         const data = row[key];
         const settings = config.rowProperties[key]
-        console.log(index ,settings, data)
         return (
           <td key={i} className="p-2">
             <input
@@ -221,3 +220,7 @@ function roundValue(value = 0) {
   }
   return rounded;
 }
+
+
+
+
