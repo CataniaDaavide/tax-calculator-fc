@@ -135,7 +135,15 @@ function TableRow({ row, index }) {
       );
 
       // formula per calcolare il prezzo di vendita
-      prezzoVenditaInput.value = roundValue(prezzoBinVal - prezzoBinVal * 0.01);
+      var percentagePriceSell = 0;
+      if(prezzoBinVal < 10 * 1000){
+        percentagePriceSell = 0.023;
+      }else if(prezzoBinVal < 100 * 1000){
+        percentagePriceSell = 0.018;
+      }else{
+        percentagePriceSell = 0.013;
+      }
+      prezzoVenditaInput.value = roundValue(prezzoBinVal - (prezzoBinVal * percentagePriceSell));
     }
 
     // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
