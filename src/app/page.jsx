@@ -131,7 +131,7 @@ function TableRow({ row, index }) {
 
       //formula per calcolare il prezzo massimo
       prezzoAcquistoMassimoInput.value = roundValue(
-        prezzoBinVal - prezzoBinVal * 0.06
+        prezzoBinVal - prezzoBinVal * 0.08
       );
 
       // formula per calcolare il prezzo di vendita
