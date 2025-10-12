@@ -187,7 +187,7 @@ function TableRow({ row, index }) {
               defaultValue={data}
               onBlur={handleValue}
               disabled={settings.disabled}
-              className={`w-full border border-zinc-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-zinc-600`}
+              className={`w-full border border-zinc-600 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-zinc-600`}
             />
           </td>
         );
