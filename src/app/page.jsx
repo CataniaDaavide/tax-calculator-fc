@@ -72,8 +72,8 @@ export default function App(props) {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <p className="text-2xl text-black font-bold text-center py-10">
+    <div className="p-6 bg-zinc-900 min-h-screen">
+      <p className="text-2xl text-white font-bold text-center py-10">
         TAX CALCULATOR FC 26
       </p>
       <div className="max-w-6xl mx-auto">
@@ -93,8 +93,8 @@ export default function App(props) {
         </div>
 
         <div className="overflow-auto h-full max-h-[450px] md:max-h-[500px]">
-          <table className="min-w-full bg-white shadow rounded-lg overflow-hidden">
-            <thead className="bg-gray-200 text-black">
+          <table className="min-w-full bg-zinc-800 shadow rounded-lg overflow-hidden">
+            <thead className="bg-zinc-800 text-white">
               <tr>
                 <th className="py-2 px-4 text-left">Nome Giocatore</th>
                 <th className="py-2 px-4 text-left">Prezzo BIN</th>
@@ -179,7 +179,7 @@ function TableRow({ row, index }) {
         const data = row[key];
         const settings = config.rowProperties[key]
         return (
-          <td key={i} className="p-2">
+          <td key={i} className="p-2 bg-zinc-700">
             <input
               key={key}
               type={settings.type}
@@ -187,7 +187,7 @@ function TableRow({ row, index }) {
               defaultValue={data}
               onBlur={handleValue}
               disabled={settings.disabled}
-              className={`w-full border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-300`}
+              className={`w-full border border-zinc-600 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-zinc-600`}
             />
           </td>
         );
