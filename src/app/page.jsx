@@ -6,14 +6,14 @@ const config = {
   localStorage: {
     playerData: "PLAYERDATA",
   },
-  rowProperties:{
-    nomeGiocatore: { type: "text"},
-    prezzoBin: { type: "number"},
-    prezzoAcquistoAttuale: { type: "number"},
+  rowProperties: {
+    nomeGiocatore: { type: "text" },
+    prezzoBin: { type: "number" },
+    prezzoAcquistoAttuale: { type: "number" },
     prezzoAcquistoMassimo: { type: "number", disabled: true },
     prezzoVendita: { type: "number", disabled: true },
     guadagnoNetto: { type: "number", disabled: true },
-  }
+  },
 };
 
 export default function App(props) {
@@ -25,7 +25,6 @@ export default function App(props) {
     prezzoVendita: 0,
     guadagnoNetto: 0,
   };
-
 
   const [rows, setRows] = useState(
     Array(5)
@@ -39,9 +38,12 @@ export default function App(props) {
     var playerData = localStorage.getItem(config.localStorage.playerData);
 
     // se il playerData non è settato imposta un valore di default
-    if(!playerData){
-      localStorage.setItem(config.localStorage.playerData, JSON.stringify(rows));
-      return
+    if (!playerData) {
+      localStorage.setItem(
+        config.localStorage.playerData,
+        JSON.stringify(rows)
+      );
+      return;
     }
 
     // parse data
@@ -49,12 +51,15 @@ export default function App(props) {
 
     //se non ci sono elementi nell'array imposta un valore di default
     if (playerData.length === 0) {
-        localStorage.setItem(config.localStorage.playerData, JSON.stringify(rows));
-        return;
-    };
+      localStorage.setItem(
+        config.localStorage.playerData,
+        JSON.stringify(rows)
+      );
+      return;
+    }
 
     //carica i data
-    setRows(playerData)
+    setRows(playerData);
   }, []);
 
   // click sul pulsante aggiungi riga
@@ -67,8 +72,15 @@ export default function App(props) {
     const ris = confirm("Vuoi eliminare tutti i giocatori");
     if (!ris) return;
 
-    localStorage.setItem(config.localStorage.playerData, JSON.stringify(Array(5).fill().map(() => ({ ...exampleRow }))));
-    window.location = "/"
+    localStorage.setItem(
+      config.localStorage.playerData,
+      JSON.stringify(
+        Array(5)
+          .fill()
+          .map(() => ({ ...exampleRow }))
+      )
+    );
+    window.location = "/";
   };
 
   return (
@@ -128,6 +140,9 @@ function TableRow({ row, index }) {
       const prezzoVenditaInput = document.getElementById(
         `prezzoVendita_${index}`
       );
+      const guadagnoNettoInput = document.getElementById(
+        `guadagnoNetto_${index}`
+      );
 
       //formula per calcolare il prezzo massimo
       prezzoAcquistoMassimoInput.value = roundValue(
@@ -136,29 +151,67 @@ function TableRow({ row, index }) {
 
       // formula per calcolare il prezzo di vendita
       var percentagePriceSell = 0;
-      if(prezzoBinVal < 10 * 1000){
+      if (prezzoBinVal < 10 * 1000) {
         percentagePriceSell = 0.023;
-      }else if(prezzoBinVal < 100 * 1000){
+      } else if (prezzoBinVal < 100 * 1000) {
         percentagePriceSell = 0.018;
-      }else{
+      } else {
         percentagePriceSell = 0.013;
       }
-      prezzoVenditaInput.value = roundValue(prezzoBinVal - (prezzoBinVal * percentagePriceSell));
+      prezzoVenditaInput.value = roundValue(
+        prezzoBinVal - prezzoBinVal * percentagePriceSell
+      );
+
+      guadagnoNettoInput.value =
+        prezzoVenditaInput.value - prezzoVenditaInput.value * 0.05 - prezzoAcquistoMassimoInput.value;
+      guadagnoNettoInput.classList.remove(
+        "!text-blue-300",
+        "!text-red-500",
+        "!text-green-500"
+      );
+      guadagnoNettoInput.classList.add("!text-blue-300");
     }
 
     // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
     if (e.target.id.startsWith("prezzoAcquistoAttuale")) {
       const prezzoAcquistoAttualeVal = e.target.value;
-      const guadagnoNettoVal = document.getElementById(
-        `guadagnoNetto_${index}`
-      );
       const prezzoVenditaVal = document.getElementById(
         `prezzoVendita_${index}`
       )?.value;
+      const guadagnoNettoInput = document.getElementById(
+        `guadagnoNetto_${index}`
+      );
+      const prezzoAcquistoMassimoVal = document.getElementById(
+        `prezzoAcquistoMassimo_${index}`
+      )?.value;
 
       // formula per calcolare il guadagno netto
-      guadagnoNettoVal.value =
-        prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoAttualeVal;
+      if (
+        prezzoAcquistoAttualeVal === 0 ||
+        prezzoAcquistoAttualeVal.length === 0
+      ) {
+        guadagnoNettoInput.value =
+          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoMassimoVal;
+        guadagnoNettoInput.classList.remove(
+          "!text-blue-300",
+          "!text-red-500",
+          "!text-green-500"
+        );
+        guadagnoNettoInput.classList.add("!text-blue-300");
+      } else {
+        guadagnoNettoInput.value =
+          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoAttualeVal;
+        var color = "";
+        guadagnoNettoInput.classList.remove(
+          "!text-blue-300",
+          "!text-red-500",
+          "!text-green-500"
+        );
+        guadagnoNettoInput.value >= 0
+          ? (color = "!text-green-500")
+          : (color = "!text-red-500");
+        guadagnoNettoInput.classList.add(color);
+      }
     }
 
     // arrotonda i valori secondo le logiche di fc usando la funzione definita
@@ -171,21 +224,29 @@ function TableRow({ row, index }) {
     playerData = JSON.parse(playerData);
 
     playerData[index] = {
-      nomeGiocatore: document.getElementById(`nomeGiocatore_${index}`)?.value || "",
+      nomeGiocatore:
+        document.getElementById(`nomeGiocatore_${index}`)?.value || "",
       prezzoBin: document.getElementById(`prezzoBin_${index}`)?.value || 0,
-      prezzoAcquistoAttuale: document.getElementById(`prezzoAcquistoAttuale_${index}`)?.value || 0,
-      prezzoAcquistoMassimo:document.getElementById(`prezzoAcquistoMassimo_${index}`)?.value || 0,
-      prezzoVendita: document.getElementById(`prezzoVendita_${index}`)?.value || 0,
-      guadagnoNetto: document.getElementById(`guadagnoNetto_${index}`)?.value || 0,
+      prezzoAcquistoAttuale:
+        document.getElementById(`prezzoAcquistoAttuale_${index}`)?.value || 0,
+      prezzoAcquistoMassimo:
+        document.getElementById(`prezzoAcquistoMassimo_${index}`)?.value || 0,
+      prezzoVendita:
+        document.getElementById(`prezzoVendita_${index}`)?.value || 0,
+      guadagnoNetto:
+        document.getElementById(`guadagnoNetto_${index}`)?.value || 0,
     };
-    localStorage.setItem(config.localStorage.playerData, JSON.stringify(playerData));
+    localStorage.setItem(
+      config.localStorage.playerData,
+      JSON.stringify(playerData)
+    );
   };
 
   return (
     <tr>
       {Object.keys(row).map((key, i) => {
         const data = row[key];
-        const settings = config.rowProperties[key]
+        const settings = config.rowProperties[key];
         return (
           <td key={i} className="p-2 bg-zinc-700">
             <input
@@ -228,7 +289,3 @@ function roundValue(value = 0) {
   }
   return rounded;
 }
-
-
-
-
