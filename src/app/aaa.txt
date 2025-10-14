@@ -1,9 +1,0 @@
-/*fn: (id, elementId) => {
-        // questa funzione calcola il prezzo massimo che non si deve superare per ottenere un profit dalla vendita del giocatore
-        // id: è l'id dell'input prezzo bin su cui si deve calcolare la formula
-        // elementId: è l'id dell'elemento dove va settato il valore calcolato con la formula (è e.target)
-        const priceBin = document.getElementById(`prezzoBin_${id}`)?.value;
-        if (priceBin) {
-          const element = document.getElementById(elementId);
-          element.value = parseInt(priceBin) - parseInt(priceBin) * 0.6;
-        }*/

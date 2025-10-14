@@ -131,86 +131,121 @@ export default function App(props) {
 function TableRow({ row, index }) {
   // quando si esce dal foucus la funzione valuta il valore e imposta gli altri campi
   const handleValue = (e) => {
+    const prezzoBinInput = document.getElementById(`prezzoBin_${index}`);
+    const prezzoAcquistoAttualeInput = document.getElementById(
+      `prezzoAcquistoAttuale_${index}`
+    );
+    const prezzoAcquistoMassimoInput = document.getElementById(
+      `prezzoAcquistoMassimo_${index}`
+    );
+    const prezzoVenditaInput = document.getElementById(
+      `prezzoVendita_${index}`
+    );
+    const guadagnoNettoInput = document.getElementById(
+      `guadagnoNetto_${index}`
+    );
+
     // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
     if (e.target.id.startsWith("prezzoBin")) {
-      var prezzoBinVal = e.target.value;
-      const prezzoAcquistoMassimoInput = document.getElementById(
-        `prezzoAcquistoMassimo_${index}`
-      );
-      const prezzoVenditaInput = document.getElementById(
-        `prezzoVendita_${index}`
-      );
-      const guadagnoNettoInput = document.getElementById(
-        `guadagnoNetto_${index}`
-      );
+      // formula per calcolare il prezzo massimo
+      if (prezzoAcquistoMassimoInput && prezzoBinInput) {
+        const prezzoBinVal = parseInt(prezzoBinInput.value);
 
-      //formula per calcolare il prezzo massimo
-      prezzoAcquistoMassimoInput.value = roundValue(
-        prezzoBinVal - prezzoBinVal * 0.08
-      );
+        var percentage = 0;
+        if (prezzoBinVal < 10 * 1000) {
+          percentage = 0.16;
+        } else if (prezzoBinVal < 100 * 1000) {
+          percentage = 0.07;
+        } else {
+          percentage = 0.065;
+        }
+        prezzoAcquistoMassimoInput.value = roundValue(
+          prezzoBinVal - prezzoBinVal * percentage
+        );
+      }
 
       // formula per calcolare il prezzo di vendita
-      var percentagePriceSell = 0;
-      if (prezzoBinVal < 10 * 1000) {
-        percentagePriceSell = 0.023;
-      } else if (prezzoBinVal < 100 * 1000) {
-        percentagePriceSell = 0.018;
-      } else {
-        percentagePriceSell = 0.013;
+      if (prezzoVenditaInput && prezzoBinInput) {
+        const prezzoBinVal = parseInt(prezzoBinInput.value);
+
+        var percentage = 0;
+        if (prezzoBinVal < 10 * 1000) {
+          percentage = 0.023;
+        } else if (prezzoBinVal < 100 * 1000) {
+          percentage = 0.018;
+        } else {
+          percentage = 0.013;
+        }
+        prezzoVenditaInput.value = roundValue(
+          prezzoBinVal - prezzoBinVal * percentage
+        );
       }
-      prezzoVenditaInput.value = roundValue(
-        prezzoBinVal - prezzoBinVal * percentagePriceSell
-      );
 
-      guadagnoNettoInput.value =
-        prezzoVenditaInput.value - prezzoVenditaInput.value * 0.05 - prezzoAcquistoMassimoInput.value;
-      guadagnoNettoInput.classList.remove(
-        "!text-blue-300",
-        "!text-red-500",
-        "!text-green-500"
-      );
-      guadagnoNettoInput.classList.add("!text-blue-300");
-    }
-
-    // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
-    if (e.target.id.startsWith("prezzoAcquistoAttuale")) {
-      const prezzoAcquistoAttualeVal = e.target.value;
-      const prezzoVenditaVal = document.getElementById(
-        `prezzoVendita_${index}`
-      )?.value;
-      const guadagnoNettoInput = document.getElementById(
-        `guadagnoNetto_${index}`
-      );
-      const prezzoAcquistoMassimoVal = document.getElementById(
-        `prezzoAcquistoMassimo_${index}`
-      )?.value;
-
-      // formula per calcolare il guadagno netto
+      // calcolo guadagno netto quando il prezzo di acquist attuale è 0
       if (
-        prezzoAcquistoAttualeVal === 0 ||
-        prezzoAcquistoAttualeVal.length === 0
+        guadagnoNettoInput &&
+        prezzoVenditaInput &&
+        prezzoAcquistoMassimoInput &&
+        prezzoAcquistoAttualeInput
       ) {
-        guadagnoNettoInput.value =
-          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoMassimoVal;
+        // se ha un valore del prezzo di acquisto diverso da 0
+        // o il prezzo del bin è 0 non eseguo il codice sotto
+        if (parseInt(prezzoAcquistoAttualeInput.value) != 0 || parseInt(prezzoBinInput.value) === 0) return;
+
+        const prezzoAcquistoMassimoVal = parseInt(prezzoAcquistoMassimoInput.value);
+        const prezzoVenditaVal = parseInt(prezzoVenditaInput.value);
+        guadagnoNettoInput.value = 
+          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoMassimoVal
+        ;
+
+        // rimuovo il colore del testo precedente e cambio il colore del testo
         guadagnoNettoInput.classList.remove(
           "!text-blue-300",
           "!text-red-500",
           "!text-green-500"
         );
         guadagnoNettoInput.classList.add("!text-blue-300");
-      } else {
-        guadagnoNettoInput.value =
-          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoAttualeVal;
-        var color = "";
+      }
+    }
+
+    // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
+    if (e.target.id.startsWith("prezzoAcquistoAttuale")) {
+      // formula per calcolare il guadagno netto
+      if (guadagnoNettoInput && prezzoAcquistoAttualeInput) {
+        const prezzoAcquistoAttualeVal = prezzoAcquistoAttualeInput.value;
+        const prezzoAcquistoMassimoVal = prezzoAcquistoMassimoInput.value;
+        const prezzoVenditaVal = prezzoVenditaInput.value;
+
+        // rimuovo il colore del testo precedente
         guadagnoNettoInput.classList.remove(
           "!text-blue-300",
           "!text-red-500",
           "!text-green-500"
         );
-        guadagnoNettoInput.value >= 0
-          ? (color = "!text-green-500")
-          : (color = "!text-red-500");
-        guadagnoNettoInput.classList.add(color);
+
+        if (parseInt(prezzoAcquistoAttualeInput.value) === 0) {
+          guadagnoNettoInput.value = 
+            prezzoVenditaVal -
+            prezzoVenditaVal * 0.05 -
+            prezzoAcquistoMassimoVal;
+          
+          if(parseInt(prezzoBinInput.value) === 0) return
+
+          // cambio il colore del testo
+          guadagnoNettoInput.classList.add("!text-blue-300");
+        } else {
+          var color = "bg-red-500";
+          guadagnoNettoInput.value =
+            prezzoVenditaVal -
+            prezzoVenditaVal * 0.05 -
+            prezzoAcquistoAttualeVal;
+
+          // cambio il colore del testo
+          guadagnoNettoInput.value >= 0
+            ? (color = "!text-green-500")
+            : (color = "!text-red-500");
+          guadagnoNettoInput.classList.add(color);
+        }
       }
     }
 
