@@ -1,5 +1,6 @@
 "use client";
 
+import { Hand, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 const config = {
@@ -7,16 +8,20 @@ const config = {
     playerData: "PLAYERDATA",
   },
   rowProperties: {
-    nomeGiocatore: { type: "text" },
-    prezzoBin: { type: "number" },
-    prezzoAcquistoAttuale: { type: "number" },
-    prezzoAcquistoMassimo: { type: "number", disabled: true },
-    prezzoVendita: { type: "number", disabled: true },
-    guadagnoNetto: { type: "number", disabled: true },
+    nomeGiocatore: { type: "text", title: "Nome Giocatore" },
+    prezzoBin: { type: "number", title: "Prezzo BIN" },
+    prezzoAcquistoAttuale: { type: "number", title: "Prezzo Acquisto Attuale	" },
+    prezzoAcquistoMassimo: {
+      type: "number",
+      title: "Prezzo Acquisto Massimo	",
+      disabled: true,
+    },
+    prezzoVendita: { type: "number", title: "Prezzo Vendita	", disabled: true },
+    guadagnoNetto: { type: "number", title: "Guadagno Netto	", disabled: true },
   },
 };
 
-export default function App(props) {
+export default function TaxCalculator() {
   const exampleRow = {
     nomeGiocatore: "",
     prezzoBin: 0,
@@ -27,12 +32,10 @@ export default function App(props) {
   };
 
   const [rows, setRows] = useState(
-    Array(5)
-      .fill()
-      .map(() => ({ ...exampleRow }))
+    Array.from({ length: 5 }, () => ({ ...exampleRow }))
   );
 
-  // quandosi carica la pagina cerca dentro il localstorage i valori vecchi
+  // al load della pagina recupera i dati dal localstorage
   useEffect(() => {
     //recupera i dati dal localstorage
     var playerData = localStorage.getItem(config.localStorage.playerData);
@@ -58,9 +61,20 @@ export default function App(props) {
       return;
     }
 
+    if (playerData.length < 5) {
+      const amount = 5 - playerData.length;
+      const newRows = Array.from({ length: amount }, () => ({ ...exampleRow }));
+      playerData.push(...newRows);
+    }
+
     //carica i data
     setRows(playerData);
   }, []);
+
+  useEffect(() => {
+    console.log(rows);
+    localStorage.setItem(config.localStorage.playerData, JSON.stringify(rows));
+  }, [rows]);
 
   // click sul pulsante aggiungi riga
   const addRows = () => {
@@ -72,15 +86,8 @@ export default function App(props) {
     const ris = confirm("Vuoi eliminare tutti i giocatori");
     if (!ris) return;
 
-    localStorage.setItem(
-      config.localStorage.playerData,
-      JSON.stringify(
-        Array(5)
-          .fill()
-          .map(() => ({ ...exampleRow }))
-      )
-    );
-    window.location = "/";
+    const playerData = Array.from({ length: 5 }, () => ({ ...exampleRow }));
+    setRows(playerData);
   };
 
   return (
@@ -108,17 +115,26 @@ export default function App(props) {
           <table className="min-w-full bg-zinc-800 shadow rounded-lg overflow-hidden">
             <thead className="bg-zinc-800 text-white">
               <tr>
-                <th className="py-2 px-4 text-left">Nome Giocatore</th>
-                <th className="py-2 px-4 text-left">Prezzo BIN</th>
-                <th className="py-2 px-4 text-left">Prezzo Acquisto Attuale</th>
-                <th className="py-2 px-4 text-left">Prezzo Acquisto Massimo</th>
-                <th className="py-2 px-4 text-left">Prezzo Vendita</th>
-                <th className="py-2 px-4 text-left">Guadagno Netto</th>
+                <th className="py-2 px-4 text-left">N.</th>
+                {Object.entries(config.rowProperties).map(([key, x]) => (
+                  <th key={key} className="py-2 px-4 text-left">
+                    {x.title}
+                  </th>
+                ))}
+                <th className="py-2 px-4 text-left">Azioni</th>
               </tr>
             </thead>
             <tbody className="text-black">
               {rows.map((row, index) => {
-                return <TableRow key={index} row={row} index={index} />;
+                return (
+                  <TableRow
+                    key={index}
+                    setRows={setRows}
+                    rows={rows}
+                    row={row}
+                    index={index}
+                  />
+                );
               })}
             </tbody>
           </table>
@@ -128,9 +144,14 @@ export default function App(props) {
   );
 }
 
-function TableRow({ row, index }) {
+function TableRow({ setRows, rows, row, index }) {
+  const [manual, setManual] = useState(false);
+
   // quando si esce dal foucus la funzione valuta il valore e imposta gli altri campi
   const handleValue = (e) => {
+    const nomeGiocatoreInput = document.getElementById(
+      `nomeGiocatore_${index}`
+    );
     const prezzoBinInput = document.getElementById(`prezzoBin_${index}`);
     const prezzoAcquistoAttualeInput = document.getElementById(
       `prezzoAcquistoAttuale_${index}`
@@ -146,7 +167,7 @@ function TableRow({ row, index }) {
     );
 
     // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
-    if (e.target.id.startsWith("prezzoBin")) {
+    if (e.target.id.startsWith("prezzoBin") && !manual) {
       // formula per calcolare il prezzo massimo
       if (prezzoAcquistoMassimoInput && prezzoBinInput) {
         const prezzoBinVal = parseInt(prezzoBinInput.value);
@@ -180,72 +201,46 @@ function TableRow({ row, index }) {
           prezzoBinVal - prezzoBinVal * percentage
         );
       }
-
-      // calcolo guadagno netto quando il prezzo di acquist attuale è 0
-      if (
-        guadagnoNettoInput &&
-        prezzoVenditaInput &&
-        prezzoAcquistoMassimoInput &&
-        prezzoAcquistoAttualeInput
-      ) {
-        // se ha un valore del prezzo di acquisto diverso da 0
-        // o il prezzo del bin è 0 non eseguo il codice sotto
-        if (parseInt(prezzoAcquistoAttualeInput.value) != 0 || parseInt(prezzoBinInput.value) === 0) return;
-
-        const prezzoAcquistoMassimoVal = parseInt(prezzoAcquistoMassimoInput.value);
-        const prezzoVenditaVal = parseInt(prezzoVenditaInput.value);
-        guadagnoNettoInput.value = 
-          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoMassimoVal
-        ;
-
-        // rimuovo il colore del testo precedente e cambio il colore del testo
-        guadagnoNettoInput.classList.remove(
-          "!text-blue-300",
-          "!text-red-500",
-          "!text-green-500"
-        );
-        guadagnoNettoInput.classList.add("!text-blue-300");
-      }
     }
 
-    // quando viene settato il valore aggiorna di conseguenza tutti gli altri campi della riga
-    if (e.target.id.startsWith("prezzoAcquistoAttuale")) {
-      // formula per calcolare il guadagno netto
-      if (guadagnoNettoInput && prezzoAcquistoAttualeInput) {
-        const prezzoAcquistoAttualeVal = prezzoAcquistoAttualeInput.value;
-        const prezzoAcquistoMassimoVal = prezzoAcquistoMassimoInput.value;
-        const prezzoVenditaVal = prezzoVenditaInput.value;
+    // formula per calcolare il guadagno netto
+    if (guadagnoNettoInput && prezzoAcquistoAttualeInput) {
+      const prezzoAcquistoAttualeVal = prezzoAcquistoAttualeInput.value;
+      const prezzoAcquistoMassimoVal = prezzoAcquistoMassimoInput.value;
+      const prezzoVenditaVal = prezzoVenditaInput.value;
 
-        // rimuovo il colore del testo precedente
-        guadagnoNettoInput.classList.remove(
-          "!text-blue-300",
-          "!text-red-500",
-          "!text-green-500"
-        );
+      // rimuovo il colore del testo precedente
+      guadagnoNettoInput.classList.remove(
+        "!text-blue-300",
+        "!text-red-500",
+        "!text-green-500"
+      );
 
-        if (parseInt(prezzoAcquistoAttualeInput.value) === 0) {
-          guadagnoNettoInput.value = 
-            prezzoVenditaVal -
-            prezzoVenditaVal * 0.05 -
-            prezzoAcquistoMassimoVal;
-          
-          if(parseInt(prezzoBinInput.value) === 0) return
+      if (
+        parseInt(prezzoAcquistoAttualeInput.value) === 0 ||
+        prezzoAcquistoAttualeInput.value.length === 0
+      ) {
+        guadagnoNettoInput.value =
+          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoMassimoVal;
 
-          // cambio il colore del testo
-          guadagnoNettoInput.classList.add("!text-blue-300");
-        } else {
-          var color = "bg-red-500";
-          guadagnoNettoInput.value =
-            prezzoVenditaVal -
-            prezzoVenditaVal * 0.05 -
-            prezzoAcquistoAttualeVal;
+        if (
+          parseInt(prezzoBinInput?.value) === 0 ||
+          prezzoBinInput?.value.length === 0
+        )
+          return;
 
-          // cambio il colore del testo
-          guadagnoNettoInput.value >= 0
-            ? (color = "!text-green-500")
-            : (color = "!text-red-500");
-          guadagnoNettoInput.classList.add(color);
-        }
+        // cambio il colore del testo
+        guadagnoNettoInput.classList.add("!text-blue-300");
+      } else {
+        var color = "bg-red-500";
+        guadagnoNettoInput.value =
+          prezzoVenditaVal - prezzoVenditaVal * 0.05 - prezzoAcquistoAttualeVal;
+
+        // cambio il colore del testo
+        guadagnoNettoInput.value >= 0
+          ? (color = "!text-green-500")
+          : (color = "!text-red-500");
+        guadagnoNettoInput.classList.add(color);
       }
     }
 
@@ -254,49 +249,107 @@ function TableRow({ row, index }) {
       e.target.value = roundValue(e.target.value);
     }
 
-    // sincronizza i dati nel payload
-    var playerData = localStorage.getItem(config.localStorage.playerData);
-    playerData = JSON.parse(playerData);
-
-    playerData[index] = {
-      nomeGiocatore:
-        document.getElementById(`nomeGiocatore_${index}`)?.value || "",
-      prezzoBin: document.getElementById(`prezzoBin_${index}`)?.value || 0,
-      prezzoAcquistoAttuale:
-        document.getElementById(`prezzoAcquistoAttuale_${index}`)?.value || 0,
-      prezzoAcquistoMassimo:
-        document.getElementById(`prezzoAcquistoMassimo_${index}`)?.value || 0,
-      prezzoVendita:
-        document.getElementById(`prezzoVendita_${index}`)?.value || 0,
-      guadagnoNetto:
-        document.getElementById(`guadagnoNetto_${index}`)?.value || 0,
+    // aggiorna lo state dei dati
+    const updatedRows = [...rows];
+    updatedRows[index] = {
+      nomeGiocatore: nomeGiocatoreInput?.value || "",
+      prezzoBin: prezzoBinInput?.value || 0,
+      prezzoAcquistoAttuale: prezzoAcquistoAttualeInput?.value || 0,
+      prezzoAcquistoMassimo: prezzoAcquistoMassimoInput?.value || 0,
+      prezzoVendita: prezzoVenditaInput?.value || 0,
+      guadagnoNetto: guadagnoNettoInput?.value || 0,
     };
-    localStorage.setItem(
-      config.localStorage.playerData,
-      JSON.stringify(playerData)
-    );
+    setRows(updatedRows);
   };
 
   return (
-    <tr>
+    <tr className="bg-zinc-700">
+      <td className="text-white text-center">{index + 1}</td>
       {Object.keys(row).map((key, i) => {
-        const data = row[key];
         const settings = config.rowProperties[key];
         return (
-          <td key={i} className="p-2 bg-zinc-700">
+          <td key={i} className="p-2">
             <input
               key={key}
               type={settings.type}
               id={`${key}_${index}`}
-              defaultValue={data}
-              onBlur={handleValue}
-              disabled={settings.disabled}
-              className={`w-full border border-zinc-600 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-zinc-600`}
+              value={row[key]}
+              onChange={(e) => {
+                const updatedRows = [...rows];
+                updatedRows[index][key] = e.target.value || 0;
+                setRows(updatedRows); // aggiorna lo state
+              }}
+              onBlur={handleValue} // puoi mantenere il blur per i calcoli
+              disabled={
+                manual && key != "guadagnoNetto" ? false : settings.disabled
+              }
+              className="w-full border border-zinc-600 text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-zinc-600"
             />
           </td>
         );
       })}
+      <ActionRow
+        index={index}
+        manual={manual}
+        setManual={setManual}
+        setRows={setRows}
+        rows={rows}
+      />
     </tr>
+  );
+}
+
+function ActionRow({ index, manual, setManual, setRows, rows }) {
+  const handleDelete = (e) => {
+    try {
+      e.preventDefault();
+      const nomeGiocatore = document.getElementById(
+        `nomeGiocatore_${index}`
+      )?.value;
+      const ris = confirm(
+        `Vuoi eliminare il giocatore ${nomeGiocatore?.toUpperCase()} alla riga ${
+          index + 1
+        }`
+      );
+      if (!ris) return;
+
+      const updatedRows = [...rows];
+      updatedRows[index] = { ...exampleRow};
+      // while (updatedRows.length < 5) {
+      //   updatedRows.push({ ...exampleRow });
+      // }
+      setRows(updatedRows);
+    } catch (ex) {}
+  };
+  const handleManualRow = (e) => {
+    try {
+      e.preventDefault();
+      setManual((prev) => !prev);
+      document
+        .getElementById(`prezzoBin_${index}`)
+        .addEventListener("blur", () => {});
+    } catch (ex) {}
+  };
+
+  return (
+    <td className="flex gap-3 p-2">
+      <button
+        onClick={handleManualRow}
+        className={`${
+          manual ? "text-green-500" : "text-zinc-500"
+        } p-2 rounded-lg border cursor-pointer`}
+        title="Calcoli manuali"
+      >
+        <Hand />
+      </button>
+      <button
+        onClick={handleDelete}
+        className="text-red-500 p-2 rounded-lg border cursor-pointer"
+        title="Elimina riga"
+      >
+        <Trash2 />
+      </button>
+    </td>
   );
 }
 
